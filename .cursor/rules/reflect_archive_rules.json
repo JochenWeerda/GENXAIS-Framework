@@ -1,0 +1,100 @@
+{
+  "mode": "REFLECT-ARCHIVE",
+  "description": "Reflection and archiving of project results and experiences",
+  "rules": [
+    {
+      "id": "reflect-1",
+      "description": "Reflect on the entire workflow and its results",
+      "priority": "high"
+    },
+    {
+      "id": "reflect-2",
+      "description": "Identify successes and challenges in the project",
+      "priority": "high"
+    },
+    {
+      "id": "reflect-3",
+      "description": "Analyze the effectiveness of the different modes (VAN, PLAN, CREATE, IMPLEMENTATION)",
+      "priority": "medium"
+    },
+    {
+      "id": "reflect-4",
+      "description": "Evaluate the quality of the generated artifacts",
+      "priority": "medium"
+    },
+    {
+      "id": "reflect-5",
+      "description": "Identify potential improvements for future projects",
+      "priority": "high"
+    },
+    {
+      "id": "reflect-6",
+      "description": "Document insights and best practices",
+      "priority": "medium"
+    },
+    {
+      "id": "reflect-7",
+      "description": "Archive all relevant project results and documents",
+      "priority": "high"
+    },
+    {
+      "id": "reflect-8",
+      "description": "Create a project summary for future reference",
+      "priority": "medium"
+    },
+    {
+      "id": "reflect-9",
+      "description": "Identify reusable components and patterns",
+      "priority": "medium"
+    },
+    {
+      "id": "reflect-10",
+      "description": "Use the MongoDB integration to store reflection and archiving results",
+      "priority": "medium"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "reflection_document",
+      "description": "Reflection document with insights and improvement potentials",
+      "format": "markdown"
+    },
+    {
+      "name": "project_summary",
+      "description": "Summary of the project and its results",
+      "format": "markdown"
+    },
+    {
+      "name": "best_practices",
+      "description": "Documented best practices from the project",
+      "format": "markdown"
+    },
+    {
+      "name": "archive_index",
+      "description": "Index of archived project results and documents",
+      "format": "markdown"
+    }
+  ],
+  "mongodb_collections": [
+    {
+      "name": "reflections",
+      "description": "Collection of reflection documents"
+    },
+    {
+      "name": "project_summaries",
+      "description": "Collection of project summaries"
+    },
+    {
+      "name": "best_practices",
+      "description": "Collection of best practices"
+    },
+    {
+      "name": "archive_indices",
+      "description": "Collection of archive indices"
+    },
+    {
+      "name": "workflow_archives",
+      "description": "Archive of workflow results"
+    }
+  ]
+}

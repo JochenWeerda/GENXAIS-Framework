@@ -1,0 +1,109 @@
+{
+  "mode": "IMPLEMENTATION",
+  "description": "Integration, module tests, production deployment, evaluation, improvement - Mode for production deployment",
+  "rules": [
+    {
+      "id": "implement-1",
+      "description": "Integrate the implemented components into the overall system",
+      "priority": "high"
+    },
+    {
+      "id": "implement-2",
+      "description": "Conduct module tests to verify functionality",
+      "priority": "high"
+    },
+    {
+      "id": "implement-3",
+      "description": "Create deployment configurations for different environments",
+      "priority": "medium"
+    },
+    {
+      "id": "implement-4",
+      "description": "Conduct integration tests to verify component interaction",
+      "priority": "high"
+    },
+    {
+      "id": "implement-5",
+      "description": "Evaluate the performance and quality of the implementation",
+      "priority": "medium"
+    },
+    {
+      "id": "implement-6",
+      "description": "Identify and fix issues and bugs",
+      "priority": "high"
+    },
+    {
+      "id": "implement-7",
+      "description": "Optimize the implementation for performance and resource usage",
+      "priority": "medium"
+    },
+    {
+      "id": "implement-8",
+      "description": "Create documentation for users and administrators",
+      "priority": "medium"
+    },
+    {
+      "id": "implement-9",
+      "description": "Conduct a final verification of requirements",
+      "priority": "high"
+    },
+    {
+      "id": "implement-10",
+      "description": "Use the MongoDB integration to store implementation results",
+      "priority": "medium"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "integration_results",
+      "description": "Results of component integration",
+      "format": "markdown"
+    },
+    {
+      "name": "test_results",
+      "description": "Results of module and integration tests",
+      "format": "markdown"
+    },
+    {
+      "name": "deployment_configs",
+      "description": "Deployment configurations for different environments",
+      "format": "code"
+    },
+    {
+      "name": "evaluation_metrics",
+      "description": "Metrics for evaluating the implementation",
+      "format": "markdown"
+    },
+    {
+      "name": "improvements",
+      "description": "Identified improvements and bug fixes",
+      "format": "markdown"
+    }
+  ],
+  "mongodb_collections": [
+    {
+      "name": "integration_results",
+      "description": "Collection of integration results"
+    },
+    {
+      "name": "test_results",
+      "description": "Collection of test results"
+    },
+    {
+      "name": "deployment_configs",
+      "description": "Collection of deployment configurations"
+    },
+    {
+      "name": "evaluation_metrics",
+      "description": "Collection of evaluation metrics"
+    },
+    {
+      "name": "improvements",
+      "description": "Collection of improvements"
+    },
+    {
+      "name": "implementation_results",
+      "description": "Collection of results from the implementation phase"
+    }
+  ]
+}

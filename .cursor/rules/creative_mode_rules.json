@@ -1,0 +1,100 @@
+{
+  "mode": "CREATE",
+  "description": "Code generation, resource provisioning, design patterns, architecture principles, tests - Mode for implementation",
+  "rules": [
+    {
+      "id": "create-1",
+      "description": "Generate code based on the solution design from the PLAN mode",
+      "priority": "high"
+    },
+    {
+      "id": "create-2",
+      "description": "Implement tasks in the defined order",
+      "priority": "high"
+    },
+    {
+      "id": "create-3",
+      "description": "Use established design patterns for recurring problems",
+      "priority": "medium"
+    },
+    {
+      "id": "create-4",
+      "description": "Adhere to the architectural principles of the project",
+      "priority": "high"
+    },
+    {
+      "id": "create-5",
+      "description": "Create resource requirements for the implementation",
+      "priority": "medium"
+    },
+    {
+      "id": "create-6",
+      "description": "Implement tests for the generated code",
+      "priority": "high"
+    },
+    {
+      "id": "create-7",
+      "description": "Document the code and implementation decisions",
+      "priority": "medium"
+    },
+    {
+      "id": "create-8",
+      "description": "Consider security and performance aspects",
+      "priority": "high"
+    },
+    {
+      "id": "create-9",
+      "description": "Check code quality and compliance with standards",
+      "priority": "medium"
+    },
+    {
+      "id": "create-10",
+      "description": "Use the MongoDB integration to store code artifacts and tests",
+      "priority": "medium"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "code_artifacts",
+      "description": "Generated code artifacts",
+      "format": "code"
+    },
+    {
+      "name": "resource_requirements",
+      "description": "Resource requirements for implementation",
+      "format": "markdown"
+    },
+    {
+      "name": "design_patterns",
+      "description": "Used design patterns with justification",
+      "format": "markdown"
+    },
+    {
+      "name": "test_cases",
+      "description": "Test cases for the generated code",
+      "format": "code"
+    }
+  ],
+  "mongodb_collections": [
+    {
+      "name": "code_artifacts",
+      "description": "Collection of code artifacts"
+    },
+    {
+      "name": "resource_requirements",
+      "description": "Collection of resource requirements"
+    },
+    {
+      "name": "design_patterns",
+      "description": "Collection of used design patterns"
+    },
+    {
+      "name": "test_cases",
+      "description": "Collection of test cases"
+    },
+    {
+      "name": "create_results",
+      "description": "Collection of results from the creation phase"
+    }
+  ]
+}

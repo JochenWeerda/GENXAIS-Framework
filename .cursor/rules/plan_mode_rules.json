@@ -1,0 +1,96 @@
+{
+  "mode": "PLAN",
+  "description": "Project planning, solution conception, task distribution, next steps - Mode for project planning",
+  "rules": [
+    {
+      "id": "plan-1",
+      "description": "Create a structured project plan based on the VAN analysis",
+      "priority": "high"
+    },
+    {
+      "id": "plan-2",
+      "description": "Define clear milestones with measurable results",
+      "priority": "high"
+    },
+    {
+      "id": "plan-3",
+      "description": "Develop a solution design that meets the requirements",
+      "priority": "high"
+    },
+    {
+      "id": "plan-4",
+      "description": "Consider alternative solution approaches and justify decisions",
+      "priority": "medium"
+    },
+    {
+      "id": "plan-5",
+      "description": "Break down the project into manageable tasks",
+      "priority": "high"
+    },
+    {
+      "id": "plan-6",
+      "description": "Identify dependencies between tasks",
+      "priority": "medium"
+    },
+    {
+      "id": "plan-7",
+      "description": "Estimate the effort for each task",
+      "priority": "medium"
+    },
+    {
+      "id": "plan-8",
+      "description": "Prioritize tasks by importance and urgency",
+      "priority": "medium"
+    },
+    {
+      "id": "plan-9",
+      "description": "Define the next concrete steps for implementation",
+      "priority": "high"
+    },
+    {
+      "id": "plan-10",
+      "description": "Use the MongoDB integration to store project plans and tasks",
+      "priority": "medium"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "project_plan",
+      "description": "Structured project plan with milestones and timeline",
+      "format": "markdown"
+    },
+    {
+      "name": "solution_design",
+      "description": "Solution design with architecture overview and design decisions",
+      "format": "markdown"
+    },
+    {
+      "name": "task_list",
+      "description": "List of tasks with dependencies and priorities",
+      "format": "list"
+    },
+    {
+      "name": "next_steps",
+      "description": "Concrete next steps for implementation",
+      "format": "list"
+    }
+  ],
+  "mongodb_collections": [
+    {
+      "name": "project_plans",
+      "description": "Collection of project plans"
+    },
+    {
+      "name": "solution_designs",
+      "description": "Collection of solution designs"
+    },
+    {
+      "name": "tasks",
+      "description": "Collection of tasks"
+    },
+    {
+      "name": "plan_results",
+      "description": "Collection of results from the planning phase"
+    }
+  ]
+}
