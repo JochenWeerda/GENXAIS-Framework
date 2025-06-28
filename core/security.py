@@ -1,6 +1,6 @@
 """
 GENXAIS Framework - Security Component
-Implements security measures according to TÜV requirements
+Implements security measures according to BSI and TÜV requirements
 """
 
 import os
@@ -14,6 +14,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.x509 import load_pem_x509_certificate, load_der_x509_certificate
+from cryptography.x509.oid import NameOID
 from dataclasses import dataclass
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -22,7 +24,7 @@ logger = logging.getLogger("GENXAIS.Security")
 
 @dataclass
 class SecurityConfig:
-    """Security configuration settings"""
+    """Security configuration settings according to BSI requirements"""
     key_rotation_days: int = 30
     password_min_length: int = 12
     max_login_attempts: int = 3
@@ -32,6 +34,10 @@ class SecurityConfig:
     tls_min_version: str = "1.3"
     hash_algorithm: str = "SHA-512"
     encryption_algorithm: str = "AES-256-GCM"
+    cert_validation_interval: int = 24  # Hours
+    key_backup_interval: int = 7  # Days
+    audit_log_encryption: bool = True
+    cert_revocation_check: bool = True
 
 class SecurityManager:
     """Central security management component"""
@@ -327,4 +333,155 @@ class SecurityManager:
             )
         except Exception as e:
             logger.error(f"Key rotation failed: {e}")
-            raise 
+            raise
+
+    def validate_certificate(self, cert_data: bytes, is_pem: bool = True) -> bool:
+        """Validate X.509 certificate according to BSI TR-03145"""
+        try:
+            # Load certificate
+            cert = (load_pem_x509_certificate(cert_data) if is_pem 
+                   else load_der_x509_certificate(cert_data))
+            
+            # Check certificate validity period
+            now = datetime.utcnow()
+            if now < cert.not_valid_before or now > cert.not_valid_after:
+                logger.warning("Certificate validity period check failed")
+                return False
+            
+            # Check key usage
+            try:
+                key_usage = cert.extensions.get_extension_for_oid(
+                    NameOID.KEY_USAGE
+                ).value
+                if not key_usage.digital_signature:
+                    logger.warning("Certificate key usage check failed")
+                    return False
+            except Exception:
+                logger.warning("Certificate missing required key usage extension")
+                return False
+            
+            # Check algorithm compliance
+            if cert.signature_algorithm_oid not in self.get_compliant_algorithms():
+                logger.warning("Certificate uses non-compliant algorithm")
+                return False
+            
+            # Additional BSI-specific checks
+            if not self.check_bsi_requirements(cert):
+                return False
+            
+            return True
+        except Exception as e:
+            logger.error(f"Certificate validation failed: {e}")
+            return False
+        
+    def check_bsi_requirements(self, cert) -> bool:
+        """Additional BSI-specific certificate checks"""
+        try:
+            # Check for German Trust List if required
+            if self.config.cert_revocation_check:
+                if not self.check_revocation_status(cert):
+                    return False
+            
+            # Check key length
+            public_key = cert.public_key()
+            if isinstance(public_key, rsa.RSAPublicKey):
+                if public_key.key_size < 3072:  # BSI minimum requirement
+                    return False
+            
+            return True
+        except Exception as e:
+            logger.error(f"BSI requirement check failed: {e}")
+            return False
+        
+    def get_compliant_algorithms(self) -> List[str]:
+        """Get BSI-compliant algorithms"""
+        return [
+            "sha256WithRSAEncryption",
+            "sha384WithRSAEncryption",
+            "sha512WithRSAEncryption",
+            "ecdsa-with-SHA256",
+            "ecdsa-with-SHA384",
+            "ecdsa-with-SHA512"
+        ]
+    
+    def backup_crypto_keys(self) -> None:
+        """Backup cryptographic keys according to BSI requirements"""
+        try:
+            backup_dir = "secure_backup/keys"
+            os.makedirs(backup_dir, exist_ok=True)
+            
+            # Backup encryption keys
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            backup_path = os.path.join(backup_dir, f"keys_backup_{timestamp}.enc")
+            
+            # Encrypt backup
+            backup_key = AESGCM.generate_key(bit_length=256)
+            aesgcm = AESGCM(backup_key)
+            nonce = os.urandom(12)
+            
+            # Create encrypted backup
+            with open(backup_path, "wb") as f:
+                f.write(nonce)
+                f.write(aesgcm.encrypt(
+                    nonce,
+                    self.fernet.encryption_key,
+                    None
+                ))
+            
+            # Log backup event
+            self.log_security_event(
+                "key_backup",
+                {"timestamp": timestamp, "location": backup_path},
+                "INFO"
+            )
+        except Exception as e:
+            logger.error(f"Key backup failed: {e}")
+            raise
+        
+    def enhanced_audit_logging(
+        self,
+        event_type: str,
+        details: Dict[str, Any],
+        severity: str = "INFO",
+        source_ip: Optional[str] = None,
+        user_id: Optional[str] = None
+    ) -> None:
+        """Enhanced audit logging according to BSI requirements"""
+        try:
+            event = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "event_type": event_type,
+                "severity": severity,
+                "details": details,
+                "source_ip": source_ip,
+                "user_id": user_id,
+                "system_info": self.get_system_info()
+            }
+            
+            # Encrypt audit log if required
+            if self.config.audit_log_encryption:
+                event = self.encrypt_data(str(event).encode())
+            
+            self.audit_log.log(
+                getattr(logging, severity),
+                f"Security Event: {event}"
+            )
+            
+            # Additional BSI required logging
+            if severity in ["WARNING", "ERROR", "CRITICAL"]:
+                self.notify_security_team(event)
+        except Exception as e:
+            logger.error(f"Enhanced audit logging failed: {e}")
+        
+    def get_system_info(self) -> Dict[str, Any]:
+        """Get system information for audit logging"""
+        return {
+            "hostname": os.uname().nodename,
+            "timestamp": datetime.utcnow().isoformat(),
+            "process_id": os.getpid()
+        }
+        
+    def notify_security_team(self, event: Dict[str, Any]) -> None:
+        """Notify security team about critical events"""
+        # Implementation depends on organization's notification system
+        pass 
