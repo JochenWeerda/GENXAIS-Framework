@@ -1,1 +1,61 @@
-{"framework":{"version":"1.0.0","name":"GENXAIS Framework","description":"Next Generation of AI-Enhanced Software Development"},"token_optimization":{"enabled":true,"strategy":"advanced"},"logging":{"level":"INFO"}}
+{
+    "framework": {
+        "token_optimization": true,
+        "parallel_execution": true,
+        "logging_level": "INFO",
+        "max_retries": 3,
+        "timeout": 60
+    },
+    "rag_system": {
+        "storage_type": "mongodb",
+        "mongodb_uri": "mongodb://localhost:27017/",
+        "backup": {
+            "enabled": true,
+            "interval_hours": 24,
+            "retention_days": 30,
+            "encryption": true
+        }
+    },
+    "error_handling": {
+        "retry_on_failure": true,
+        "max_retries": 3,
+        "backoff_factor": 2,
+        "recovery_enabled": true,
+        "logging": {
+            "file": "logs/error.log",
+            "level": "ERROR",
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        }
+    },
+    "agents": {
+        "default_mode": "VAN",
+        "timeout": 30,
+        "max_parallel": 5,
+        "quality_thresholds": {
+            "code": 0.85,
+            "documentation": 0.80,
+            "testing": 0.90
+        }
+    },
+    "security": {
+        "api_key_encryption": true,
+        "session_timeout": 3600,
+        "rate_limiting": {
+            "enabled": true,
+            "max_requests": 100,
+            "window_seconds": 60
+        }
+    },
+    "monitoring": {
+        "enabled": true,
+        "metrics_port": 9090,
+        "collect_interval": 15,
+        "exporters": ["prometheus", "elasticsearch"]
+    },
+    "development": {
+        "debug": false,
+        "test_mode": false,
+        "hot_reload": true,
+        "profiling": false
+    }
+}
