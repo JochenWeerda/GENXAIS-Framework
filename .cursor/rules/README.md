@@ -1,35 +1,91 @@
-# Cursor Rules for the GENXAIS Framework
+# Cursor Rules for GENXAIS Framework
 
-These rules are designed for use with the Cursor IDE and are based on the Agentic Project Management (APM) Framework. They serve to improve the effectiveness and consistency of the various work modes in the project.
+This directory contains the rules for the different modes of the GENXAIS Framework.
 
-## Available Modes
+## Modes
 
-The project uses the following modes, which are supported by corresponding rule files:
+The GENXAIS Framework supports the following modes:
 
-1. **VAN Mode** (Vision, Analysis, Navigation): an_mode_rules.json
-   - Focus on validation and analysis of systems and code
-   - Systematic examination of architecture, environment, and code quality
-   - Documentation of problems and recommendations
+1. **VAN Mode** (Vision, Analysis, Navigation)
+   - Understanding requirements
+   - Analyzing context
+   - Asking clarifying questions
 
-2. **PLAN Mode**: plan_mode_rules.json
-   - Creation of structured implementation plans
-   - Task assignment and dependency management
-   - Identification of components that require creative phases
+2. **PLAN Mode** (Project Planning)
+   - Project planning
+   - Solution concept
+   - Task distribution
+   - Next steps
 
-3. **CREATE Mode**: creative_mode_rules.json
-   - Generation of multiple design options
-   - Analysis of advantages and disadvantages of each option
-   - Documentation of implementation guidelines
+3. **CREATE Mode** (Code Generation)
+   - Code generation
+   - Resource provisioning
+   - Design patterns
+   - Architecture principles
+   - Tests
 
-4. **IMPLEMENT Mode**: implement_mode_rules.json
-   - Step-by-step implementation according to the plan
-   - Documentation of commands and results
-   - Verification of complete implementation
+4. **IMPLEMENT Mode** (Implementation)
+   - Integration
+   - Deployment
+   - Documentation
+   - Validation
 
-5. **REFLECT-ARCHIVE Mode**: eflect_archive_rules.json
-   - Reflection on the implementation
-   - Documentation of successes, challenges, and insights
-   - Archiving of the completed task
+5. **REFLECT Mode** (Reflection)
+   - Reflection on the process
+   - Documentation of lessons learned
+   - Knowledge transfer
+
+6. **ARCHIVE** (Archiving)
+   - Archiving the current state
+   - Creating a snapshot
+
+## Mode Commands
+
+To switch between modes, use the following commands in the command line:
+
+```bash
+python scripts/mode_commands.py VAN-mode
+python scripts/mode_commands.py PLAN-mode
+python scripts/mode_commands.py CREATE-mode
+python scripts/mode_commands.py IMPLEMENT-mode
+python scripts/mode_commands.py REFLECT-mode
+python scripts/mode_commands.py ARCHIVE NOW
+```
+
+These commands will activate the corresponding mode and load the appropriate rules.
+
+## Mode Rules
+
+Each mode has its own set of rules that define how the AI assistant should behave in that mode. The rules are stored in JSON files in this directory.
+
+- `van_mode_rules.json`: Rules for the VAN mode
+- `plan_mode_rules.json`: Rules for the PLAN mode
+- `creative_mode_rules.json`: Rules for the CREATE mode
+- `implement_mode_rules.json`: Rules for the IMPLEMENT mode
+- `reflect_archive_rules.json`: Rules for the REFLECT and ARCHIVE modes
+
+## SDK Integration
+
+The mode commands are integrated with the GENXAIS SDK. When you run a mode command, it will:
+
+1. Initialize the GENXAIS Framework
+2. Set the current mode
+3. Load the appropriate rules
+4. Update the current mode in the `.genxais/current_mode.txt` file
+
+You can also programmatically switch modes using the SDK:
+
+```python
+from genxais_sdk import GENXAISFramework
+
+framework = GENXAISFramework()
+framework.set_mode("VAN")  # Switch to VAN mode
+current_mode = framework.get_mode()  # Get the current mode
+```
+
+## Custom Rules
+
+You can create custom rules for your project by creating new JSON files in this directory. The rules should follow the same structure as the existing rules.
 
 ## Integration with the Memory Bank
 
@@ -49,21 +105,6 @@ memory-bank/
    reflection/                # REFLECT mode documents
    archive/                   # Archived documents
 `
-
-## Using the Rules
-
-To activate the rules, simply enter the corresponding mode command:
-
-`
-VAN-mode
-PLAN-mode
-CREATE-mode
-IMPLEMENT-mode
-REFLECT-mode
-ARCHIVE NOW
-`
-
-The agent will then load the appropriate rules and adapt its work mode.
 
 ## Handover Protocol
 
