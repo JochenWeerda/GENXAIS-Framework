@@ -1,4 +1,5 @@
 {
+    "version": "1.0.0",
     "framework": {
         "token_optimization": true,
         "parallel_execution": true,
@@ -6,9 +7,22 @@
         "max_retries": 3,
         "timeout": 60
     },
+    "mongodb": {
+        "uri": "mongodb://localhost:27017/",
+        "database": "genxais_db",
+        "collections": {
+            "tasks": "tasks",
+            "results": "results",
+            "agents": "agents"
+        }
+    },
     "rag_system": {
         "storage_type": "mongodb",
         "mongodb_uri": "mongodb://localhost:27017/",
+        "embedding_model": "all-MiniLM-L6-v2",
+        "vector_store_path": "./vector_store",
+        "chunk_size": 1000,
+        "chunk_overlap": 200,
         "backup": {
             "enabled": true,
             "interval_hours": 24,
@@ -37,6 +51,15 @@
             "testing": 0.90
         }
     },
+    "apm_framework": {
+        "default_phase": "van",
+        "phase_timeout": 3600,
+        "auto_transition": true
+    },
+    "langgraph": {
+        "max_steps": 10,
+        "timeout": 300
+    },
     "security": {
         "api_key_encryption": true,
         "session_timeout": 3600,
@@ -57,5 +80,10 @@
         "test_mode": false,
         "hot_reload": true,
         "profiling": false
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "genxais.log",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     }
 }

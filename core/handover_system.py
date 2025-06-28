@@ -12,7 +12,8 @@ import pymongo
 from pymongo import MongoClient
 from cryptography.fernet import Fernet
 from dataclasses import dataclass
-from functools import wraps
+
+from error_handling.framework import SDKErrorHandler
 
 @dataclass
 class HandoverError(Exception):
@@ -29,7 +30,7 @@ class HandoverSystem:
         self.logger = self._setup_logging()
         self.db = self._init_mongodb()
         self.crypto = self._init_encryption()
-        self.error_handlers: List[Callable] = []
+        self.error_handler = SDKErrorHandler()  # Verwende das zentrale Error-Handling
         self.success_handlers: List[Callable] = []
         
     def _load_default_config(self) -> Dict[str, Any]:
@@ -71,10 +72,10 @@ class HandoverSystem:
             return db
         except Exception as e:
             self.logger.error(f"MongoDB initialization failed: {e}")
-            raise HandoverError(
-                message="MongoDB initialization failed",
-                error_type="db_init_error",
-                context={"error": str(e)}
+            return self.error_handler.handle_error(
+                "db_init_error",
+                {"error": str(e)},
+                "MongoDB initialization failed"
             )
             
     def _init_encryption(self) -> Fernet:
@@ -84,30 +85,17 @@ class HandoverSystem:
             return Fernet(key)
         except Exception as e:
             self.logger.error(f"Encryption initialization failed: {e}")
-            raise HandoverError(
-                message="Encryption initialization failed",
-                error_type="crypto_init_error",
-                context={"error": str(e)}
+            return self.error_handler.handle_error(
+                "crypto_init_error",
+                {"error": str(e)},
+                "Encryption initialization failed"
             )
             
-    def on_error(self, handler: Callable):
-        """Register error handler"""
-        self.error_handlers.append(handler)
-        return handler
-        
     def on_success(self, handler: Callable):
         """Register success handler"""
         self.success_handlers.append(handler)
         return handler
         
-    def _notify_error(self, error: HandoverError):
-        """Notify all error handlers"""
-        for handler in self.error_handlers:
-            try:
-                handler(error)
-            except Exception as e:
-                self.logger.error(f"Error handler failed: {e}")
-                
     def _notify_success(self, context: Dict[str, Any]):
         """Notify all success handlers"""
         for handler in self.success_handlers:
@@ -115,6 +103,11 @@ class HandoverSystem:
                 handler(context)
             except Exception as e:
                 self.logger.error(f"Success handler failed: {e}")
+                self.error_handler.handle_error(
+                    "handler_error",
+                    {"error": str(e)},
+                    "Success handler failed"
+                )
                 
     def save_context(self, context: Dict[str, Any]) -> bool:
         """Save current context"""
@@ -147,13 +140,13 @@ class HandoverSystem:
             return False
             
         except Exception as e:
-            error = HandoverError(
-                message="Failed to save context",
-                error_type="save_error",
-                context={"error": str(e)}
+            self.logger.error(f"Failed to save context: {e}")
+            self.error_handler.handle_error(
+                "save_error",
+                {"error": str(e)},
+                "Failed to save context"
             )
-            self._notify_error(error)
-            raise error
+            return False
             
     def load_context(self) -> Dict[str, Any]:
         """Load saved context"""
@@ -176,13 +169,13 @@ class HandoverSystem:
             return context
             
         except Exception as e:
-            error = HandoverError(
-                message="Failed to load context",
-                error_type="load_error",
-                context={"error": str(e)}
+            self.logger.error(f"Failed to load context: {e}")
+            self.error_handler.handle_error(
+                "load_error",
+                {"error": str(e)},
+                "Failed to load context"
             )
-            self._notify_error(error)
-            raise error
+            return {}
             
     def validate_handover(self, source: str, target: str) -> bool:
         """Validate mode transition"""
@@ -217,13 +210,12 @@ class HandoverSystem:
             self.logger.info(f"Cleaned up {result.deleted_count} old handovers")
             
         except Exception as e:
-            error = HandoverError(
-                message="Cleanup failed",
-                error_type="cleanup_error",
-                context={"error": str(e)}
+            self.logger.error(f"Cleanup failed: {e}")
+            self.error_handler.handle_error(
+                "cleanup_error",
+                {"error": str(e)},
+                "Failed to clean up old handovers"
             )
-            self._notify_error(error)
-            raise error
             
     def persist_to_filesystem(
         self,
@@ -252,13 +244,13 @@ class HandoverSystem:
             return True
             
         except Exception as e:
-            error = HandoverError(
-                message="Filesystem persistence failed",
-                error_type="fs_error",
-                context={"error": str(e)}
+            self.logger.error(f"Filesystem persistence failed: {e}")
+            self.error_handler.handle_error(
+                "fs_error",
+                {"error": str(e)},
+                "Failed to persist to filesystem"
             )
-            self._notify_error(error)
-            raise error
+            return False
             
     def persist_to_mongodb(self, data: Dict[str, Any]) -> bool:
         """Persist handover data to MongoDB"""
@@ -287,13 +279,13 @@ class HandoverSystem:
             return False
             
         except Exception as e:
-            error = HandoverError(
-                message="MongoDB persistence failed",
-                error_type="db_error",
-                context={"error": str(e)}
+            self.logger.error(f"MongoDB persistence failed: {e}")
+            self.error_handler.handle_error(
+                "db_error",
+                {"error": str(e)},
+                "Failed to persist to MongoDB"
             )
-            self._notify_error(error)
-            raise error
+            return False
             
     def recover_last_successful(self) -> Optional[Dict[str, Any]]:
         """Recover last successful handover"""
@@ -318,13 +310,13 @@ class HandoverSystem:
             return context
             
         except Exception as e:
-            error = HandoverError(
-                message="Recovery failed",
-                error_type="recovery_error",
-                context={"error": str(e)}
+            self.logger.error(f"Recovery failed: {e}")
+            self.error_handler.handle_error(
+                "recovery_error",
+                {"error": str(e)},
+                "Failed to recover last handover"
             )
-            self._notify_error(error)
-            raise error
+            return None
             
     def notify_target_mode(self) -> None:
         """Notify target mode about pending handover"""
@@ -340,10 +332,9 @@ class HandoverSystem:
             self.logger.info(f"Notified target mode: {target_mode}")
             
         except Exception as e:
-            error = HandoverError(
-                message="Target mode notification failed",
-                error_type="notification_error",
-                context={"error": str(e)}
-            )
-            self._notify_error(error)
-            raise error 
+            self.logger.error(f"Target mode notification failed: {e}")
+            self.error_handler.handle_error(
+                "notification_error",
+                {"error": str(e)},
+                "Failed to notify target mode"
+            ) 
