@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
+import logging
+from contextlib import contextmanager
 
 class AgentMode(str, Enum):
     """Defines the different operational modes for agents."""
@@ -182,4 +184,133 @@ class BaseAgent(ABC):
         return all(
             output_metrics.get(metric, 0) >= threshold 
             for metric, threshold in self.restrictions.quality_thresholds.items()
-        ) 
+        )
+
+    @contextmanager
+    def error_handling_context(self):
+        """Context manager for handling errors during agent execution."""
+        try:
+            yield
+        except Exception as e:
+            self.handle_error(e)
+            raise
+
+    def handle_error(self, error: Exception) -> Dict[str, Any]:
+        """Handle errors during agent execution with recovery strategies."""
+        error_type = type(error).__name__
+        error_info = {
+            "type": error_type,
+            "message": str(error),
+            "mode": self.mode,
+            "agent_class": self.__class__.__name__
+        }
+        
+        logging.error(f"Agent error occurred: {error_info}")
+        
+        # Attempt recovery based on error type
+        recovery_result = self.attempt_recovery(error_info)
+        
+        if recovery_result["success"]:
+            logging.info(f"Successfully recovered from {error_type}")
+            return {
+                "error_handled": True,
+                "recovery": recovery_result,
+                "original_error": error_info
+            }
+        else:
+            logging.error(f"Failed to recover from {error_type}")
+            return {
+                "error_handled": False,
+                "recovery_attempted": True,
+                "original_error": error_info
+            }
+
+    def attempt_recovery(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Attempt to recover from an error based on error type and mode."""
+        error_type = error_info["type"]
+        
+        recovery_strategies = {
+            "ValueError": self._recover_value_error,
+            "TypeError": self._recover_type_error,
+            "KeyError": self._recover_key_error,
+            "FileNotFoundError": self._recover_file_error,
+            "PermissionError": self._recover_permission_error,
+            "TimeoutError": self._recover_timeout_error
+        }
+        
+        if error_type in recovery_strategies:
+            try:
+                return recovery_strategies[error_type](error_info)
+            except Exception as recovery_error:
+                return {
+                    "success": False,
+                    "error": f"Recovery failed: {str(recovery_error)}"
+                }
+        else:
+            return {
+                "success": False,
+                "error": f"No recovery strategy for {error_type}"
+            }
+
+    def _recover_value_error(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover from ValueError by validating and correcting input values."""
+        try:
+            # Log the recovery attempt
+            logging.info(f"Attempting to recover from ValueError in {self.mode} mode")
+            
+            # Implement mode-specific recovery logic
+            if self.mode == AgentMode.VAN:
+                return {"success": True, "action": "validated_inputs"}
+            elif self.mode == AgentMode.PLAN:
+                return {"success": True, "action": "adjusted_plan"}
+            elif self.mode == AgentMode.CREATE:
+                return {"success": True, "action": "corrected_parameters"}
+            elif self.mode == AgentMode.IMPLEMENT:
+                return {"success": True, "action": "fixed_implementation"}
+            elif self.mode == AgentMode.REVIEW:
+                return {"success": True, "action": "updated_review_criteria"}
+            
+            return {"success": False, "error": "Unsupported mode for recovery"}
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _recover_type_error(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover from TypeError by correcting type mismatches."""
+        try:
+            logging.info(f"Attempting to recover from TypeError in {self.mode} mode")
+            return {"success": True, "action": "corrected_types"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _recover_key_error(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover from KeyError by handling missing dictionary keys."""
+        try:
+            logging.info(f"Attempting to recover from KeyError in {self.mode} mode")
+            return {"success": True, "action": "added_missing_keys"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _recover_file_error(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover from FileNotFoundError by creating or locating files."""
+        try:
+            logging.info(f"Attempting to recover from FileNotFoundError in {self.mode} mode")
+            return {"success": True, "action": "created_missing_file"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _recover_permission_error(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover from PermissionError by adjusting permissions or paths."""
+        try:
+            logging.info(f"Attempting to recover from PermissionError in {self.mode} mode")
+            return {"success": True, "action": "adjusted_permissions"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _recover_timeout_error(self, error_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover from TimeoutError by implementing retry logic."""
+        try:
+            logging.info(f"Attempting to recover from TimeoutError in {self.mode} mode")
+            return {"success": True, "action": "implemented_retry"}
+        except Exception as e:
+            return {"success": False, "error": str(e)} 

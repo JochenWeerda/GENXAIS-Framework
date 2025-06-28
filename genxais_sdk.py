@@ -30,6 +30,8 @@ class GENXAISFramework:
         self.pipelines = {}
         self.modes = ["VAN", "PLAN", "CREATE", "IMPLEMENT", "REFLECT", "ARCHIVE"]
         self.current_mode = self._get_current_mode()
+        self._init_error_handling()
+        self._init_rag_system()
         self.logger.info("GENXAIS Framework initialized")
         
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
@@ -40,6 +42,13 @@ class GENXAISFramework:
             "logging_level": "INFO",
             "max_retries": 3,
             "timeout": 60,
+            "rag_storage": "mongodb",
+            "mongodb_uri": "mongodb://localhost:27017/",
+            "error_handling": {
+                "retry_on_failure": True,
+                "max_retries": 3,
+                "backoff_factor": 2
+            }
         }
         
         if not config_path:
@@ -101,3 +110,69 @@ class GENXAISFramework:
             str: The current mode
         """
         return self.current_mode
+
+    def _init_error_handling(self):
+        """Initialize error handling system"""
+        try:
+            from error_handling.framework import ErrorHandler
+            self.error_handler = ErrorHandler(self.config["error_handling"])
+            self.logger.info("Error handling system initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize error handling: {e}")
+            raise
+
+    def _init_rag_system(self):
+        """Initialize RAG system"""
+        try:
+            from rag_system.init_storage import init_storage
+            self.rag_storage = init_storage(
+                storage_type=self.config["rag_storage"],
+                connection_uri=self.config.get("mongodb_uri")
+            )
+            self.logger.info("RAG system initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize RAG system: {e}")
+            raise
+
+    def register_agent(self, name: str, agent_class: type) -> bool:
+        """Register a new agent
+        
+        Args:
+            name: Name of the agent
+            agent_class: Agent class to register
+            
+        Returns:
+            bool: True if registration was successful
+        """
+        try:
+            if name in self.agents:
+                self.logger.warning(f"Agent {name} already registered, updating...")
+            self.agents[name] = agent_class(self.config)
+            self.logger.info(f"Agent {name} registered successfully")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to register agent {name}: {e}")
+            return False
+
+    def execute_pipeline(self, pipeline_name: str, **kwargs) -> Dict[str, Any]:
+        """Execute a pipeline
+        
+        Args:
+            pipeline_name: Name of the pipeline to execute
+            **kwargs: Additional arguments for the pipeline
+            
+        Returns:
+            Dict[str, Any]: Pipeline execution results
+        """
+        try:
+            if pipeline_name not in self.pipelines:
+                raise ValueError(f"Pipeline {pipeline_name} not found")
+                
+            pipeline = self.pipelines[pipeline_name]
+            with self.error_handler.context():
+                result = pipeline.execute(**kwargs)
+                self.logger.info(f"Pipeline {pipeline_name} executed successfully")
+                return result
+        except Exception as e:
+            self.logger.error(f"Pipeline execution failed: {e}")
+            raise

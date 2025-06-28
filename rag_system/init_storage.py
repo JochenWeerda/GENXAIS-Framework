@@ -205,6 +205,133 @@ class RAGStorageInitializer:
             "timestamp": datetime.now().isoformat()
         }
 
+    def create_backup(self) -> Dict[str, Any]:
+        """Creates a backup of all RAG system data"""
+        try:
+            # 1. Create backup timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_dir = os.path.join("rag_system", "storage", "backup", f"backup_{timestamp}")
+            os.makedirs(backup_dir, exist_ok=True)
+
+            # 2. Backup filesystem data
+            for dir_name in ["documents", "embeddings", "indexes"]:
+                src_dir = os.path.join("rag_system", "storage", dir_name)
+                dst_dir = os.path.join(backup_dir, dir_name)
+                if os.path.exists(src_dir):
+                    os.makedirs(dst_dir, exist_ok=True)
+                    for file in os.listdir(src_dir):
+                        src_file = os.path.join(src_dir, file)
+                        dst_file = os.path.join(dst_dir, file)
+                        if os.path.isfile(src_file):
+                            with open(src_file, 'rb') as sf, open(dst_file, 'wb') as df:
+                                df.write(sf.read())
+
+            # 3. Backup MongoDB collections
+            if self.mongodb_uri:
+                client = MongoClient(self.mongodb_uri)
+                db = client[self.db_name]
+                
+                for collection in self.required_collections:
+                    backup_file = os.path.join(backup_dir, f"{collection}.json")
+                    with open(backup_file, 'w') as f:
+                        documents = list(db[collection].find({}))
+                        # Convert ObjectId to string for JSON serialization
+                        for doc in documents:
+                            doc['_id'] = str(doc['_id'])
+                            if 'doc_id' in doc:
+                                doc['doc_id'] = str(doc['doc_id'])
+                        json.dump(documents, f, indent=2, default=str)
+
+            # 4. Create backup metadata
+            metadata = {
+                "backup_time": timestamp,
+                "collections_backed_up": self.required_collections,
+                "filesystem_backed_up": True,
+                "backup_location": backup_dir
+            }
+            
+            with open(os.path.join(backup_dir, "backup_metadata.json"), 'w') as f:
+                json.dump(metadata, f, indent=2)
+
+            return {
+                "success": True,
+                "message": "Backup created successfully",
+                "backup_dir": backup_dir,
+                "timestamp": timestamp
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "type": "backup_failed"
+            }
+
+    def restore_backup(self, backup_dir: str) -> Dict[str, Any]:
+        """Restores RAG system from a backup"""
+        try:
+            if not os.path.exists(backup_dir):
+                return {
+                    "success": False,
+                    "error": f"Backup directory not found: {backup_dir}",
+                    "type": "backup_not_found"
+                }
+
+            # 1. Verify backup metadata
+            metadata_file = os.path.join(backup_dir, "backup_metadata.json")
+            if not os.path.exists(metadata_file):
+                return {
+                    "success": False,
+                    "error": "Backup metadata not found",
+                    "type": "invalid_backup"
+                }
+
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+
+            # 2. Restore filesystem data
+            for dir_name in ["documents", "embeddings", "indexes"]:
+                src_dir = os.path.join(backup_dir, dir_name)
+                dst_dir = os.path.join("rag_system", "storage", dir_name)
+                if os.path.exists(src_dir):
+                    os.makedirs(dst_dir, exist_ok=True)
+                    for file in os.listdir(src_dir):
+                        src_file = os.path.join(src_dir, file)
+                        dst_file = os.path.join(dst_dir, file)
+                        if os.path.isfile(src_file):
+                            with open(src_file, 'rb') as sf, open(dst_file, 'wb') as df:
+                                df.write(sf.read())
+
+            # 3. Restore MongoDB collections
+            if self.mongodb_uri:
+                client = MongoClient(self.mongodb_uri)
+                db = client[self.db_name]
+                
+                for collection in self.required_collections:
+                    backup_file = os.path.join(backup_dir, f"{collection}.json")
+                    if os.path.exists(backup_file):
+                        with open(backup_file, 'r') as f:
+                            documents = json.load(f)
+                            if documents:
+                                # Clear existing collection
+                                db[collection].delete_many({})
+                                # Insert backup data
+                                db[collection].insert_many(documents)
+
+            return {
+                "success": True,
+                "message": "Backup restored successfully",
+                "restored_from": backup_dir,
+                "metadata": metadata
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "type": "restore_failed"
+            }
+
 if __name__ == "__main__":
     # Get MongoDB URI from environment or use default
     mongodb_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
